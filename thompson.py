@@ -265,23 +265,4 @@ class Chains:
 
             print(len(function.D))
             chains = Chains.generate_chains(function)
-v = V()
-# v.D = ["000", "0010", "0011", "01", "1000", "1001", "101", "11"]
-# v.R = ["01", "1100", "1110", "10", "1111", "11011", "00", "11010"]
-
-v.D = ["000", "0010", "0011","010", "011", "100", "101", "110","111"]
-v.R = ["100", "1010", "110", "1110", "11110", "01", "00", "11111", "1011"]
-# v.elem_expansion(6)
-# v.elem_expansion(7)
-# v.elem_expansion(10)
-ch = Chains.generate_chains(v)
-# for chain in ch:
-    # print(chain.chain, chain.type)
-
-Chains.make_revealing(v)
-
-ch = Chains.generate_chains(v)
-for chain in ch:
-    print(chain.chain, chain.type)
-print(Chains.is_revealing(ch))
 

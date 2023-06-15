@@ -1,7 +1,6 @@
 import pygame
 import math
 import pygame.locals as pl
-
 class Graphics:
     # Define the colors
     BLACK = (0, 0, 0)
@@ -32,9 +31,9 @@ class Graphics:
         lengths = [len(v) for v in achains]
         max_depth = max(lengths)
         local_height = sizey//max_depth
-        angle_dec = (math.atan((sizex / (2**(max_depth))  - d) / (2*local_height)) / INIT_ANGLE) ** (1/(max_depth + 1))
+        angle_dec = (math.atan((sizex / (2**(max_depth))  - d) / (2*local_height)) / self.INIT_ANGLE) ** (1/(max_depth + 1))
         # print(angle_dec)
-        rec_draw("", achains, starting, starting, INIT_ANGLE * angle_dec, local_height,angle_dec)
+        self.rec_draw("", achains, starting, starting, self.INIT_ANGLE * angle_dec, local_height,angle_dec)
 
     def rec_draw(self, string, achains, coords, ancestor, angle, local_height, angle_dec):
         (x,y) = coords
@@ -47,8 +46,8 @@ class Graphics:
 
         if string in achains:
             font = pygame.font.Font(None, 32)
-            text = font.render(string + ": " + str(achains.index(string)), True, TEXT_COLOUR)
-            # text = font.render(str(achains.index(string)), True, TEXT_COLOUR)
+            # text = font.render(string + ": " + str(achains.index(string)), True, self.TEXT_COLOUR)
+            text = font.render(str(achains.index(string)), True, self.TEXT_COLOUR)
             text_rect = text.get_rect(center=(x, y + local_height //4))
             self.screen.blit(text, text_rect)
 
@@ -62,23 +61,28 @@ class Graphics:
         elif string[-1] == "1":
             # pygame.draw.line(screen, BLACK, (ancestor[0], ancestor[1] + NODE_RADIUS), (coords[0], coords[1]- NODE_RADIUS), 2)
 
-            pygame.draw.line(self.screen, LINE_COLOUR, ancestor, coords, 2)
+            pygame.draw.line(self.screen, self.LINE_COLOUR, ancestor, coords, 2)
         elif string[-1] == "0":
 
             # pygame.draw.line(screen, BLACK, (ancestor[0], ancestor[1] + NODE_RADIUS), (coords[0], coords[1]- NODE_RADIUS), 2)
-            pygame.draw.line(self.screen, LINE_COLOUR, ancestor, coords, 2)
+            pygame.draw.line(self.screen, self.LINE_COLOUR, ancestor, coords, 2)
         if string not in achains:
-            rec_draw(string + "1", achains, (right_x, child_y), coords, angle * angle_dec, local_height, angle_dec)
-            rec_draw(string + "0", achains, (left_x, child_y), coords, angle * angle_dec, local_height, angle_dec)
+            self.rec_draw(string + "1", achains, (right_x, child_y), coords, angle * angle_dec, local_height, angle_dec)
+            self.rec_draw(string + "0", achains, (left_x, child_y), coords, angle * angle_dec, local_height, angle_dec)
 
     # Function to handle window resizing
-    def handle_resize(event):
+    def handle_resize(self, event):
         self.screen_width, self.screen_height = event.w, event.h
 
-    def handle_text(text):
+    def handle_text(self, text):
         print(text)
-        pass
+
+    def draw_tree_pair(self, v, pos1, pos2, size):
+        self.draw_binary_tree(v.D, pos1, size)
+        self.draw_binary_tree(v.R, pos2, size)
     
+    def add_entity(self, v):
+        self.entities.append(v)
     # use this function
     def run_window(self):
         # Initialize Pygame
@@ -103,7 +107,7 @@ class Graphics:
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.VIDEORESIZE:
-                    handle_resize(event)
+                    self.handle_resize(event)
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     # Check if the user clicked on the input box
                     if input_box.collidepoint(event.pos):
@@ -116,7 +120,7 @@ class Graphics:
                 elif event.type == pygame.KEYDOWN:
                     if active:
                         if event.key == pygame.K_RETURN:
-                            handle_text(text)
+                            self.handle_text(text)
                             text = ''
                         elif event.key == pygame.K_BACKSPACE:
                             text = text[:-1]
@@ -126,23 +130,27 @@ class Graphics:
             # Fill the screen with a background color
             self.screen.fill(self.BACKGROUND_COLOUR)
 
-            # tree_size = (600,500)
-            # self.draw_binary_tree(antichain, (SCREEN_WIDTH//2, 50), tree_size)
+            treesize = (self.screen_width//2,self.screen_height//2)
+            # self.draw_binary_tree(antichain, (SCREEN_WIDTH//2, 50)/t, tree_size)
+            for entity in self.entities:
+                # draw tree pair
+                self.draw_tree_pair(entity, (self.screen_width//4,50),(self.screen_width//4*3,50),(treesize[0]/2,treesize[1]))
+
 
             # pygame.draw.rect(screen, WHITE, pygame.Rect(SCREEN_WIDTH//2 - tree_size[0]//2, 50, tree_size[0], tree_size[1]), width = 1)
 
             # Draw the input box
-            pygame.draw.rect(screen, color, input_box, 2)
+            pygame.draw.rect(self.screen, color, input_box, 2)
 
             # Render the text
-            txt_surface = FONT.render(text, True, TEXT_COLOUR)
+            txt_surface = FONT.render(text, True, self.TEXT_COLOUR)
 
             # Calculate the position of the text
             text_x = input_box.x + 5
             text_y = input_box.y + 10
 
             # Blit the text onto the screen
-            screen.blit(txt_surface, (text_x, text_y))
+            self.screen.blit(txt_surface, (text_x, text_y))
             # Update the screen
             pygame.display.flip()
 
