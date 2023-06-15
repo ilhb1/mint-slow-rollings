@@ -67,7 +67,7 @@ class V:
         pass
 
     @classmethod
-    def is_ancestor(string1, string2):
+    def is_ancestor(self, string1, string2):
         if len(string1) <= len(string2): return False
         if string1[0:len(string2)] == string2:
             return True
@@ -134,7 +134,6 @@ class V:
         self.attractors = []
 
     def classify(self, leaf):
-        # TODO domain of sourcing, range of sinking, sources, and sinks
         #returns leaf type. 9 types
         if leaf in get_netural_leaves():
             return "neutral_leaf"
@@ -278,17 +277,18 @@ class Chain:
     def __init__(self, starting_point, function):
         self.chain = [] 
         self.type = ""
-        self.function = function
 
-    def classify(self):
-        d_union_r = self.function.D + self.function.R
-        if len(chain) == 0:
+    def classify(self, function):
+        d_union_r = function.D + function.R
+        self.type = "SS"
+        if len(self.chain) == 0:
             # can't classify and ungenerated chain
             raise Exception("Attempting to classify empty chain.")
         
-        if self.chain[-1] in self.function.R:
-            self.type = "SS"
-            return self.type
+        # if self.chain[0] in function.D and self.chain[-1] in function.R:
+            # print(self.chain)
+            # self.type = "SS"
+            # return self.type
         if V.is_ancestor(self.chain[0], self.chain[-1]):
             self.type = "A"
             return self.type
@@ -297,68 +297,70 @@ class Chain:
             return self.type
         
         EF = False
-        for leaf in self.function.get_d_not_r().remove(self.chain[0]):
+        SF = False
+        ld_not_lr = function.get_d_not_r()
+        ld_not_lr.remove(self.chain[0])
+        for leaf in ld_not_lr:
             if V.is_ancestor(self.chain[-1], leaf):
                 self.type = "EF"
                 EF = True
-        for leaf in self.function.get_r_not_d().remove(self.chain[0]):
+
+        lr_not_ld = function.get_r_not_d()
+        lr_not_ld.remove(self.chain[-1])
+        for leaf in lr_not_ld:
             if V.is_ancestor(self.chain[0], leaf):
-                if EF == True:
-                    self.type = "SEF"
-                else:
-                    self.type = "SF"
+                self.type = "SF"
+                SF = True
+
+        if EF and SF:
+            self.type = "SEF"
         return self.type
-
-                
-        
-
 
     @classmethod
     def generate_chain(self, starting_point, function):
         # if starting_point not in Tree.subtract(self.function.D, self.function.R):
             # raise Exception("Chain must start at leaf of D which is not a leaf of R")
         ch = Chain(starting_point, function)
-        neutral_leaves = ch.function.get_neutral_leaves()
+        neutral_leaves = function.get_neutral_leaves()
 
         ch.chain.append(starting_point)
-        current = ch.function.apply(starting_point)
+        current = function.apply(starting_point)
         ch.chain.append(current)
         while current in neutral_leaves:
-            if current == starting_points:
+            if current == starting_point:
                 self.type = "P"
                 break
-            current = ch.function.apply(current)
+            current = function.apply(current)
             ch.chain.append(current)
-
-        ch.chain.append(current)
-        ch.chain = chain
-        ch.classify()
+        ch.classify(function)
 
         return ch
 
 class Chains:
-    # TODO chains merging and extending
-    def __init__(self, function):
-        self.chains
-        self.function = function
+    def __init__(self):
+        self.chains = []
 
-    def generate_chains(self):
-        starting_points = self.function.get_d_not_r()
+    def generate_chains(self, function):
+        starting_points = function.get_d_not_r()
 
-        for points in starting_points:
-            self.chains.append(Chain.generate_chain(point))
+        for point in starting_points:
+            self.chains.append(Chain.generate_chain(point, function))
 
     def make_revealing():
         pass
         
 
 v = V()
-v.D = ["000", "0010", "0011", "01", "1000", "1001", "101", "11"]
-v.R = ["01", "1100", "1110", "10", "1111", "11011", "00", "11010"]
+# v.D = ["000", "0010", "0011", "01", "1000", "1001", "101", "11"]
+# v.R = ["01", "1100", "1110", "10", "1111", "11011", "00", "11010"]
 
-ch = Chains(v)
-ch.generate_chains()
-print(ch.chains)
+v.D = ["000", "0010", "0011","010", "011", "100", "101", "110","111"]
+v.R = ["100", "1010", "110", "1110", "11110", "01", "00", "11111", "1011"]
+# v.elem_expansion(6)
+ch = Chains()
+ch.generate_chains(v)
+for chain in ch.chains:
+    print(chain.chain, chain.type)
 
 
 # print(v.D, v.R)
