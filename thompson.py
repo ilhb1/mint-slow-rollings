@@ -1,15 +1,15 @@
 # import helper.py
+import time
 class V:
     def __init__(self, D=[], R=[]):
         self.D = D
         self.R = R
-        # TODO implement storing dynamical data in this class 
-        self.attractor_orbits = []
-        self.repeller_orbits = []
         # list of tuples with (attractor, domain of attraction)
         self.attractors = []
         # list of tuples with (repeller, range of repulsion)
         self.repellers = []
+
+        self.sources_and_sinks = []
 
     def apply(self, string):
         # identifying prefix
@@ -93,42 +93,20 @@ class V:
         self.repellers = []
         self.attractors = []
 
-    def classify(self, leaf):
+    def classify(self):
         # very WIP
-        # TODO redo with chains
         #returns leaf type. 9 types
-        # if leaf in get_netural_leaves():
-            # return "neutral_leaf"
-        # if leaf in [pair[0] for pair in repellers]:
-            # return "repellers"
-        # if leaf in [pair[1] for pair in repellers]:
-            # return "range_of_repulsion"
-        # if leaf in [pair[0] for pair in attractor]:
-            # return "attractor"
-        # if leaf in [pair[1] for pair in attractor]:
-            # return "domain_of_attraction"
         
-        # current = self.apply(leaf)
-        # while current != leaf:
-            # if V.is_prefix(current, leaf):
-                # self.repellers.append((leaf,current))
-                # return "repeller"
-            # if V.is_prefix(leaf, current):
-                # self.attractors.append((leaf,current))
-                # return "attractor"
-            # current = self.apply(current)
+        chains = Chains.generate_chains(self)
 
-        # current = self.apply_inverse(leaf)
-        # while current != leaf:
-            # if is_ancestor(leaf, current):
-                # self.repellers.append((current,leaf))
-                # return "range_of_repulsion"
-            # if is_ancestor(current, leaf):
-                # self.attractors.append((current,leaf))
-                # return "domain_of_attraction"
-            # current = self.apply_inverse(current)
-        pass
-        
+        for ch in chains:
+            if ch.type == "A":
+                self.attractors.append((ch.chain[0], ch.chain[-1]))
+            if ch.type == "R":
+                self.repellers.append((ch.chain[0], ch.chain[-1]))
+            if ch.type == "SS":
+                self.sources_and_sinks.append((ch.chain[0], ch.chain[-1]))
+
 class Chain:
     # Individual chains formally presented as a tuple (iterated augmentation chain, label)
     def __init__(self, starting_point, function):
@@ -233,7 +211,7 @@ class Chains:
         return not ("SEF" in types or "SF" in types or "EF" in types)
 
     @classmethod
-    def make_revealing(self, function):
+    def make_revealing(self, function, g=None):
         # slow rolling algorithm
         chains = Chains.generate_chains(function)
         while not Chains.is_revealing(chains):
@@ -241,9 +219,14 @@ class Chains:
             chosen_ef = None
             chosen_sf = None
 
-            # debug 
-            for chain in chains:
-                print(chain.chain, chain.type)
+            if g == None:
+                # debug 
+                for chain in chains:
+                    print(chain.chain, chain.type)
+            else:
+                time.sleep(2)
+                g.clear_entities()
+                g.add_entity(function)
 
             for ch in chains:
                 if ch.type == "SEF":
@@ -256,12 +239,13 @@ class Chains:
                     chosen_ef = ch
 
             # maintains priority for order of chain resolution
-            if chosen_sef != None:
-                chosen_sef.slow_rolling(function)
-            elif chosen_ef != None:
+            
+            if chosen_ef != None:
                 chosen_ef.slow_rolling(function)
             elif chosen_sf != None:
                 chosen_sf.slow_rolling(function)
+            elif chosen_sef != None:
+                chosen_sef.slow_rolling(function)
 
             print(len(function.D))
             chains = Chains.generate_chains(function)

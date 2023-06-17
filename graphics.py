@@ -1,6 +1,7 @@
 import pygame
 import math
 import pygame.locals as pl
+import time
 class Graphics:
     # Define the colors
     BLACK = (0, 0, 0)
@@ -16,7 +17,8 @@ class Graphics:
     NODE_GAP = 50
     HEIGHT = 50
     ANGLE_DEC_FACTOR = 0.75
-    INIT_ANGLE = 5/12 * math.pi
+    INIT_ANGLE = 7/12 * math.pi
+
 
     def __init__(self, w=1000, h=800):
         self.entities = []
@@ -25,17 +27,17 @@ class Graphics:
         self.screen = None
 
     # helper functions
-    def draw_binary_tree(self, achains, starting, size):
+    def draw_binary_tree(self, achains, starting, size, v=None):
         sizex, sizey = size
-        d = 1
         lengths = [len(v) for v in achains]
         max_depth = max(lengths)
         local_height = sizey//max_depth
-        angle_dec = (math.atan((sizex / (2**(max_depth))  - d) / (2*local_height)) / self.INIT_ANGLE) ** (1/(max_depth + 1))
+        angle_dec = (math.atan((sizex / (2**(max_depth))) / (2*local_height)) / self.INIT_ANGLE) ** (1/(max_depth + 1))
+        # angle_dec = sizex / sizey / 1.1
         # print(angle_dec)
-        self.rec_draw("", achains, starting, starting, self.INIT_ANGLE * angle_dec, local_height,angle_dec)
+        self.rec_draw("", achains, starting, starting, self.INIT_ANGLE * angle_dec, local_height,angle_dec, v)
 
-    def rec_draw(self, string, achains, coords, ancestor, angle, local_height, angle_dec):
+    def rec_draw(self, string, achains, coords, ancestor, angle, local_height, angle_dec, v=None):
         (x,y) = coords
         # pygame.draw.circle(screen, WHITE, (x, y), NODE_RADIUS)
         # pygame.draw.circle(screen, BLACK, (x, y), NODE_RADIUS, 1)
@@ -47,9 +49,24 @@ class Graphics:
         if string in achains:
             font = pygame.font.Font(None, 32)
             # text = font.render(string + ": " + str(achains.index(string)), True, self.TEXT_COLOUR)
-            text = font.render(str(achains.index(string)), True, self.TEXT_COLOUR)
+            text = font.render(str(achains.index(string) + 1), True, self.TEXT_COLOUR)
             text_rect = text.get_rect(center=(x, y + local_height //4))
             self.screen.blit(text, text_rect)
+            # if v != None:
+                # print(string, [pair[0] for pair in v.repellers])
+                # if string in [pair[0] for pair in v.repellers]:
+                    # print("balls")
+                    # r = 10
+                    # angle = 30
+                    # t = (x,y + r)
+                    # p = (math.cos(angle)*t[0] - math.sin(angle)*t[1], math.sin(angle)*t[0] + math.cos(angle)*t[1])
+
+                    # q = (math.cos(2*angle)*t[0] - math.sin(2*angle)*t[1], math.sin(2*angle)*t[0] + math.cos(2*angle)*t[1])
+
+                    # n = (math.cos(3*angle)*t[0] - math.sin(3*angle)*t[1], math.sin(3*angle)*t[0] + math.cos(3*angle)*t[1])
+                    # pygame.draw.polygon(self.screen, (255, 0, 0), (p,q,n))
+                    # time.sleep(10)
+                    
 
         # Calculate the coordinates for the child nodes
         left_x = x - local_height * math.tan(angle)
@@ -67,8 +84,8 @@ class Graphics:
             # pygame.draw.line(screen, BLACK, (ancestor[0], ancestor[1] + NODE_RADIUS), (coords[0], coords[1]- NODE_RADIUS), 2)
             pygame.draw.line(self.screen, self.LINE_COLOUR, ancestor, coords, 2)
         if string not in achains:
-            self.rec_draw(string + "1", achains, (right_x, child_y), coords, angle * angle_dec, local_height, angle_dec)
-            self.rec_draw(string + "0", achains, (left_x, child_y), coords, angle * angle_dec, local_height, angle_dec)
+            self.rec_draw(string + "1", achains, (right_x, child_y), coords, angle * angle_dec, local_height, angle_dec, v)
+            self.rec_draw(string + "0", achains, (left_x, child_y), coords, angle * angle_dec, local_height, angle_dec, v)
 
     # Function to handle window resizing
     def handle_resize(self, event):
@@ -78,11 +95,13 @@ class Graphics:
         print(text)
 
     def draw_tree_pair(self, v, pos1, pos2, size):
-        self.draw_binary_tree(v.D, pos1, size)
-        self.draw_binary_tree(v.R, pos2, size)
+        self.draw_binary_tree(v.D, pos1, size, v)
+        self.draw_binary_tree(v.R, pos2, size, v)
     
     def add_entity(self, v):
         self.entities.append(v)
+    def clear_entities(self):
+        self.entities = []
     # use this function
     def run_window(self):
         # Initialize Pygame
