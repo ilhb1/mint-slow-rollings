@@ -25,6 +25,7 @@ class Graphics:
         self.screen_width = w
         self.screen_height = h
         self.screen = None
+        self.event_queue = []
 
     # helper functions
     def draw_binary_tree(self, achains, starting, size, v=None):

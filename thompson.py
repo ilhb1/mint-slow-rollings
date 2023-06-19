@@ -32,6 +32,8 @@ class V:
         return False
        
     def elem_expansion(self, index):
+        if index >= len(self.D):
+            raise Exception("Cannot expand at index out of range.")
         elem = self.D[index]
         self.D.pop(index)
         self.D.insert(index, elem + "0")
