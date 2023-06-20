@@ -1,4 +1,5 @@
 # import helper.py
+from copy import deepcopy
 import time
 class V:
     def __init__(self, D=[], R=[]):
@@ -44,6 +45,34 @@ class V:
         self.R.insert(index, elem + "0")
         self.R.insert(index + 1, elem + "1")
 
+    def elem_minimise(self, index1, index2):
+        pass
+    
+    def _rec_minimise(self, tree):
+        for d in self.D:
+            root = d[:-1]
+            img_r0 = self.apply(root + "0")
+            img_r1 = self.apply(root + "1")
+
+            if img_r0 == img_r1[:-1] + "0" and img_r1[-1] == "1":
+                self.elem_minimise(index1, index2)   
+                return True
+        return False
+
+    def minimise(self):
+        while self._rec_minimise(tree):
+            _rec_minimise(self)
+
+    @classmethod
+    def product(self, a, b):
+        a_copy = deepcopy(a)
+        a_copy.minimise()
+        b_copy = deepcopy(b)
+        b_copy.minimise()
+
+
+        res = V(a.D, b.V)
+    
     def get_d_not_r(self):
         return [d for d in self.D if d not in self.R]
 
