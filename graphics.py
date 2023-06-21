@@ -48,12 +48,18 @@ class Graphics:
         # screen.blit(text, text_rect)
 
         if string in achains:
+            # print(achains.index(string))
             font = pygame.font.Font(None, 32)
             # text = font.render(string + ": " + str(achains.index(string)), True, self.TEXT_COLOUR)
-            text = font.render(str(achains.index(string) + 1), True, self.TEXT_COLOUR)
-            text_rect = text.get_rect(center=(x, y + local_height //4))
-            self.screen.blit(text, text_rect)
-            # if v != None:
+            try: 
+                text = font.render(str(achains.index(string) + 1), True, self.TEXT_COLOUR)
+                text_rect = text.get_rect(center=(x, y + local_height //4))
+                self.screen.blit(text, text_rect)
+
+            except e:
+                print("Exception:")
+                print(string, achains)
+                        # if v != None:
                 # print(string, [pair[0] for pair in v.repellers])
                 # if string in [pair[0] for pair in v.repellers]:
                     # print("balls")
@@ -100,9 +106,11 @@ class Graphics:
         self.draw_binary_tree(v.R, pos2, size, v)
     
     def add_entity(self, v):
-        self.entities.append(v)
+        self.event_queue.append(("E", v))
+        # self.entities.append(v)
     def clear_entities(self):
-        self.entities = []
+        self.event_queue.append(("C", None))
+        # self.entities = []
     # use this function
     def run_window(self):
         # Initialize Pygame
@@ -146,6 +154,15 @@ class Graphics:
                             text = text[:-1]
                         else:
                             text += event.unicode
+
+            if len(self.event_queue) > 0:
+                current_event = self.event_queue[0]
+                self.event_queue.pop(0)
+
+                if current_event[0] == "E":
+                    self.entities.append(current_event[1])
+                elif current_event[1] == "C":
+                    self.entities = []
 
             # Fill the screen with a background color
             self.screen.fill(self.BACKGROUND_COLOUR)

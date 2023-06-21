@@ -12,14 +12,28 @@ class V:
 
         self.sources_and_sinks = []
 
+    def validate(self):
+        if len(self.D) != len(self.R):
+            raise Exception("element must be a bijection")
+        if not self.is_antichain(self.D) or not self.is_antichain(self.R):
+            raise Exception("D and R must be antichains " + str(self.is_antichain(self.D)) + " " + str(self.is_antichain(self.R)))
+
+
     def apply(self, string):
+        self.validate()
         # identifying prefix
         for i in range(len(self.D)):
-            prefix = string[0 : len(self.D[i])]
-            rest = string[len(self.D[i]) : -1]
-            if prefix == self.D[i]:
+            # prefix = string[0 : len(self.D[i])]
+            if self.is_prefix(self.D[i], string) or self.D[i] == string:
+                rest = string[len(self.D[i]) :]
                 # changing prefix to R
-                return self.R[i] + rest
+                if rest != None:
+                    return self.R[i] + rest
+                else:
+                    return self.R[i]
+        raise Exception("Cannot apply to a point not in cone. " + string )
+        return (self.apply(string + "0"), self.apply(string + "1"))
+
     def apply_inverse(self, string):
         #TODO
         pass
@@ -31,6 +45,16 @@ class V:
         if string2[0:len(string1)] == string1:
             return True
         return False
+
+    @classmethod
+    def is_antichain(self, words):
+        for i in words:
+            for j in words:
+                if i != j and self.is_prefix(i,j):
+                    return False
+        return True
+
+
        
     def elem_expansion(self, index):
         if index >= len(self.D):
@@ -45,34 +69,80 @@ class V:
         self.R.insert(index, elem + "0")
         self.R.insert(index + 1, elem + "1")
 
-    def elem_minimise(self, index1, index2):
-        pass
-    
-    def _rec_minimise(self, tree):
-        for d in self.D:
-            root = d[:-1]
-            img_r0 = self.apply(root + "0")
-            img_r1 = self.apply(root + "1")
+    def elem_minimise(self, tuple0, tuple1):
+        word_in_D = tuple0[0][:-1]
+        word_in_R = tuple0[1][:-1]
 
-            if img_r0 == img_r1[:-1] + "0" and img_r1[-1] == "1":
-                self.elem_minimise(index1, index2)   
-                return True
+        index = self.D.index(tuple0[0])
+
+        self.D.remove(tuple0[0])
+        self.R.remove(tuple0[1])
+
+        self.D.remove(tuple1[0])
+        self.R.remove(tuple1[1])
+
+        self.D.insert(index, word_in_D)
+        self.R.insert(index, word_in_R)
+
+    def _rec_minimise(self):
+        for d in self.D:
+            # print(d)
+            # print(self.D)
+            root = d[:-1]
+            r0 = root + "0"
+            r1 = root + "1"
+            if r1 in self.D and r0 in self.D:
+                img_r0 = self.apply(r0)
+                img_r1 = self.apply(r1)
+
+                if img_r0 == img_r1[:-1] + "0" and img_r1[-1] == "1":
+                    self.elem_minimise((r0, img_r0), (r1, img_r1))   
+                    return True
         return False
 
-    def minimise(self):
-        while self._rec_minimise(tree):
-            _rec_minimise(self)
+    def minimise(self, g=None):
+        while self._rec_minimise():
+            if g != None:
+
+                time.sleep(2)
+                g.clear_entities()
+                g.add_entity(self)
+                print(self.is_antichain(self.D), self.is_antichain(self.R))
+            self._rec_minimise()
 
     @classmethod
     def product(self, a, b):
+        # making copies to not change state of a,b
+        # minimising first
         a_copy = deepcopy(a)
         a_copy.minimise()
         b_copy = deepcopy(b)
         b_copy.minimise()
 
+        # while the 'middle'trees of the product are not equal
+        while sorted(b_copy.D) != sorted(a_copy.R):
+            # picks the bigger element to expand
+            expand, target , is_first = (b_copy, a_copy, False) if len(b_copy.D) > len(a_copy.D) else (a_copy, b_copy, True)
+            tree_expand, other = (expand.R, target.D) if is_first else (expand.D, target.R)
 
-        res = V(a.D, b.V)
-    
+            # run until an expansion happens then break
+            broken = False
+            for i in tree_expand:
+                for j in other:
+                    if V.is_prefix(i,j):
+                        expand.elem_expansion(tree_expand.index(i))
+                        broken = True
+                        break
+                if broken: break
+            if broken: break
+
+        new_R = []
+        
+        for leaf in a_copy.D:
+            new_R.append(b_copy.apply(a_copy.apply(leaf)))
+            
+        return V(a_copy.D, new_R) 
+
     def get_d_not_r(self):
         return [d for d in self.D if d not in self.R]
 
@@ -270,14 +340,12 @@ class Chains:
                     chosen_ef = ch
 
             # maintains priority for order of chain resolution
-            
-            if chosen_ef != None:
+            if chosen_sef != None:
+                chosen_sef.slow_rolling(function)
+            elif chosen_ef != None:
                 chosen_ef.slow_rolling(function)
             elif chosen_sf != None:
                 chosen_sf.slow_rolling(function)
-            elif chosen_sef != None:
-                chosen_sef.slow_rolling(function)
-
-            print(len(function.D))
+            # print(len(function.D))
             chains = Chains.generate_chains(function)
 
