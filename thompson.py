@@ -9,8 +9,8 @@ class V:
         self.attractors = []
         # list of tuples with (repeller, range of repulsion)
         self.repellers = []
-
         self.sources_and_sinks = []
+        self.validate()
 
     def validate(self):
         if len(self.D) != len(self.R):
