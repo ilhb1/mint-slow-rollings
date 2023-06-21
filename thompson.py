@@ -32,11 +32,7 @@ class V:
                 else:
                     return self.R[i]
         raise Exception("Cannot apply to a point not in cone. " + string )
-        return (self.apply(string + "0"), self.apply(string + "1"))
-
-    def apply_inverse(self, string):
-        #TODO
-        pass
+        # return (self.apply(string + "0"), self.apply(string + "1"))
 
     @classmethod
     def is_prefix(self, string1, string2):
@@ -53,8 +49,6 @@ class V:
                 if i != j and self.is_prefix(i,j):
                     return False
         return True
-
-
        
     def elem_expansion(self, index):
         if index >= len(self.D):
@@ -111,6 +105,10 @@ class V:
             self._rec_minimise()
 
     @classmethod
+    def invert(self, a):
+        return V(a.R, a.D)
+
+    @classmethod
     def product(self, a, b):
         # making copies to not change state of a,b
         # minimising first
@@ -121,27 +119,43 @@ class V:
 
         # while the 'middle'trees of the product are not equal
         while sorted(b_copy.D) != sorted(a_copy.R):
-            # picks the bigger element to expand
-            expand, target , is_first = (b_copy, a_copy, False) if len(b_copy.D) > len(a_copy.D) else (a_copy, b_copy, True)
-            tree_expand, other = (expand.R, target.D) if is_first else (expand.D, target.R)
+            # # picks the bigger element to expand
+            # expand, target , is_first = (b_copy, a_copy, False) if len(b_copy.D) > len(a_copy.D) else (a_copy, b_copy, True)
+            # tree_expand, other = (expand.R, target.D) if is_first else (expand.D, target.R)
 
-            # run until an expansion happens then break
+            # # run until an expansion happens then break
+            # broken = False
+            # for i in tree_expand:
+            #     for j in other:
+            #         if V.is_prefix(i,j):
+            #             expand.elem_expansion(tree_expand.index(i))
+            #             broken = True
+            #             break
+            #     if broken: break
+
             broken = False
-            for i in tree_expand:
-                for j in other:
+            for i in a_copy.R:
+                for j in b_copy.D:
                     if V.is_prefix(i,j):
-                        expand.elem_expansion(tree_expand.index(i))
+                        a_copy.elem_expansion(a_copy.R.index(i))
+                        broken = True
+                        break
+                    if V.is_prefix(j,i):
+                        b_copy.elem_expansion(b_copy.D.index(j))
                         broken = True
                         break
                 if broken: break
-            if broken: break
 
         new_R = []
-        
+
         for leaf in a_copy.D:
             new_R.append(b_copy.apply(a_copy.apply(leaf)))
             
         return V(a_copy.D, new_R) 
+    @classmethod
+    def conjugate(self, g, c):
+        # returns c^-1 g c (right actions for now)
+        return self.product(self.product(self.invert(c), g), c)
 
     def get_d_not_r(self):
         return [d for d in self.D if d not in self.R]

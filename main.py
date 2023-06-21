@@ -55,17 +55,25 @@ Monk = t.V(["000", "0010", "0011","010", "011", "100", "101", "110","111"], ["10
 # print("Now minimising")
 # v.minimise(g)
 # g.clear_entities()
-
-result = t.V.product(Homer, Monk).minimise()
-for leaf in Homer.D:
-    print(leaf + ": ")
-    string = leaf + "00000000"
-    print(string)
-    # print(Monk.apply(Homer.apply(string)), result.apply(string))
-    print(Homer.apply(string),Monk.apply(Homer.apply(string)), result.apply(string))
-    # string = leaf + "1"
-    # print(string)
-    # # print(Monk.apply(Homer.apply(string)), result.apply(string))
-    # print(Homer.apply(string),Monk.apply(Homer.apply(string)), result.apply(string))
+identity = t.V(["0", "1"], ["0", "1"])
+# result = t.V.product(Homer, Monk)
+result = t.V.conjugate(Homer, identity)
+print(result.D, result.R)
+print(Homer.D, Homer.R)
+# g.add_entity(result)
+# time.sleep(5)
+# result.minimise()
+# g.clear_entities()
+# g.add_entity(result)
+# for leaf in Homer.D:
+#     print(leaf + ": ")
+#     string = leaf + "0"
+#     print(string)
+#     # print(Monk.apply(Homer.apply(string)) == result.apply(string))
+#     # print(Homer.apply(string),Monk.apply(Homer.apply(string)), result.apply(string))
+#     string = leaf + "1"
+#     print(string)
+#     # print(Monk.apply(Homer.apply(string)) == result.apply(string))
+#     # print(Homer.apply(string),Monk.apply(Homer.apply(string)), result.apply(string))
 
 x.join()
