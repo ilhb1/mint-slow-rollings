@@ -56,7 +56,7 @@ class Graphics:
                 text_rect = text.get_rect(center=(x, y + local_height //4))
                 self.screen.blit(text, text_rect)
 
-            except e:
+            except:
                 print("Exception:")
                 print(string, achains)
                         # if v != None:
