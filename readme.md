@@ -4,13 +4,13 @@ This class has all the code for representing elements of V.
 ``` 
 v = V(D, R)
 ```
-D and R are lists of words on {0,1} that form complete antichain. ith index of D is mapped to the ith index of R.
+D and R are lists of words on {0,1} that form a complete antichain. The ith index of D is mapped to the ith index of R.
 
 ### Chains: 
 ```
 Chains.generate_chains(v)
 ```
-Generates a list of chain.
+Generates a list of leaf chains.
 
 Code for printing chains:
 ```
