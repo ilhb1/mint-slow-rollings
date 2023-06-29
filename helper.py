@@ -41,6 +41,42 @@ class Trees:
         self._rec_build_tree(tree, antichain, "")
         return tree
 
+ 
+    # def get_connected_components(self):
+        # # I worked really hard on this and thought it was very clever but it was very unnecessary.
+        # # returns tuple of lists of leaves that are in the same connected component.
+        # # first index for D and second index for R
+        # connected_components = ([],[])
+        # common_tree = Trees.intersect(Trees.build_tree(self.D), Trees.build_tree(self.R))
+        # d_not_r = self.get_d_not_r()
+        # r_not_d = self.get_r_not_d()
+        
+        # while len(d_not_r) > 0:
+            # d = d_not_r[0]
+            # con_comp = []
+
+            # i = 1
+            # while (d[:-i] not in common_tree):
+                # i = i + 1
+            
+            # con_comp = [v for v in d_not_r if V.is_prefix(d[:-i], v)]
+            
+            # d_not_r = [d for d in d_not_r if d not in con_comp]
+            # connected_components[0].append(con_comp)
+    
+        # while len(r_not_d) > 0:
+            # r = r_not_d[0]
+            # con_comp = []
+
+            # i = 1
+            # while (r[:-i] not in common_tree):
+                # i = i + 1
+            
+            # con_comp = [v for v in r_not_d if V.is_prefix(r[:-i], v)]
+            
+            # r_not_d = [r for r in r_not_d if r not in con_comp]
+            # connected_components[1].append(con_comp)
+        # return connected_components
 
     # def check_revealing(self):
         # # TODO check revealing

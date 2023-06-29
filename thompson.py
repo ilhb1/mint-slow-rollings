@@ -3,14 +3,12 @@ from copy import deepcopy
 import time
 import random as rand
 class V:
+    # identity global
+    iden = th.V(["0", "1"], ["0", "1"])
+
     def __init__(self, D=[], R=[]):
         self.D = D
         self.R = R
-        # list of tuples with (attractor, domain of attraction)
-        self.attractors = []
-        # list of tuples with (repeller, range of repulsion)
-        self.repellers = []
-        self.sources_and_sinks = []
         self.validate()
 
     def validate(self):
@@ -32,8 +30,7 @@ class V:
                     return self.R[i] + rest
                 else:
                     return self.R[i]
-        raise Exception("Cannot apply to a point not in a cone. " + string )
-        # return (self.apply(string + "0"), self.apply(string + "1"))
+        raise Exception("Cannot apply the function to a word not below the antichain. Cannot apply to: " + string )
 
     @classmethod
     def is_prefix(self, string1, string2):
@@ -116,6 +113,7 @@ class V:
 
     @classmethod
     def product(self, a, b):
+        # returns minimal product
         # making copies to not change state of a,b
         # minimising first
         a_copy = deepcopy(a)
@@ -145,12 +143,60 @@ class V:
         for leaf in a_copy.D:
             new_R.append(b_copy.apply(a_copy.apply(leaf)))
             
-        return V(a_copy.D, new_R) 
+        res = V(a_copy.D, new_R) 
+        res.minimise()
+        return res
+    
+    @classmethod
+    def rev_product(self, a, b):
+        # returns revealing product
+        # making copies to not change state of a,b
+        # minimising first
+
+        a_copy = deepcopy(a)
+        b_copy = deepcopy(b)
+        a_copy.minimise()
+        b_copy.minimise()
+
+        # while the 'middle' trees (R of a and D of b) of the product are not equal
+        while sorted(b_copy.D) != sorted(a_copy.R):
+
+            # python doesnt have features for breaking out of nested loops
+            broken = False
+            for i in a_copy.R:
+                for j in b_copy.D:
+                    if V.is_prefix(i,j):
+                        a_copy.elem_expansion(a_copy.R.index(i))
+                        broken = True
+                        break
+                    if V.is_prefix(j,i):
+                        b_copy.elem_expansion(b_copy.D.index(j))
+                        broken = True
+                        break
+                if broken: break
+
+        new_R = []
+
+        for leaf in a_copy.D:
+            new_R.append(b_copy.apply(a_copy.apply(leaf)))
+            
+        res = V(a_copy.D, new_R) 
+        Chains.make_revealing(res)
+        return res
 
     @classmethod
     def conjugate(self, g, c):
         # returns c^-1 g c (right actions for now)
         return self.product(self.product(self.invert(c), g), c)
+    
+    @classmethod 
+    def is_equal(self, a, b):
+        a_copy = deepcopy(a)
+        a_copy.minimise()
+        b_copy = deepcopy(b)
+        b_copy.minimise()
+
+        return (a_copy.D == b_copy.D and a_copy.R == b_copy.R)
 
     def get_d_not_r(self):
         return [d for d in self.D if d not in self.R]
@@ -162,7 +208,7 @@ class V:
         return [leaf for leaf in self.D if leaf in self.R]
     
     # def get_connected_components(self):
-        # # I worked really hard on this and thought it was very clever but it was deeply unnecessary.
+        # # I worked really hard on this and thought it was very clever but it was very unnecessary.
         # # returns tuple of lists of leaves that are in the same connected component.
         # # first index for D and second index for R
         # connected_components = ([],[])
@@ -197,27 +243,6 @@ class V:
             # connected_components[1].append(con_comp)
         # return connected_components
 
-    def clear_dynamics(self):
-        # not yet usable as dynamical data is not yet stored in this class
-        # meant to be a general 'clear metadata' function
-        self.repellers = []
-        self.attractors = []
-
-    def classify(self):
-        # very WIP
-        #returns leaf type. 9 types
-        
-        chains = Chains.generate_chains(self)
-
-        for ch in chains:
-            if ch.type == "A":
-                self.attractors.append((ch.chain[0], ch.chain[-1]))
-            if ch.type == "R":
-                self.repellers.append((ch.chain[0], ch.chain[-1]))
-            if ch.type == "SS":
-                self.sources_and_sinks.append((ch.chain[0], ch.chain[-1]))
-
-
     @classmethod
     def DFS_to_antichain(self, dfs):
         achain = [""]
@@ -237,19 +262,7 @@ class V:
                 current_word = stack.pop()
         return achain
 
-    # @classmethod
-    # def random_dfs_string(self):
-        # dfs1 = "1"
-        # temp = rand.random()
-        # des_length = 14
-        # slope = -0.9/14
-        # while (len(dfs1) < des_length):
-            # if (temp > 0.1 * (len(dfs1) * slope  + 1)):
-                # dfs1 += "1"
-            # else:
-                # dfs1 += "0"
-        # return dfs1 + ("0"*len(dfs1))
-
+    # methods for testing on random antichains
     @classmethod
     def generate_random_antichain(self, length):
         achain = [""]
@@ -261,20 +274,26 @@ class V:
         return achain
 
     @classmethod
-    def generate_random_elements(self, n, size):
+    def generate_random_elements(self, size=10, n=1):
         elements = []
         for i in range(n):
-            # dfs1 = self.random_dfs_string()
-            # dfs2 = self.random_dfs_string()
-            # R = self.DFS_to_antichain(dfs2)
-            # rand.shuffle(R)
-            # elements.append(V(self.DFS_to_antichain(dfs1), R ))
             achain_D = self.generate_random_antichain(size)
             achain_D.sort()
             achain_R = self.generate_random_antichain(size)
             rand.shuffle(achain_R)
             elements.append(V(achain_D, achain_R))
         return elements
+
+    def slow_rolling(self, chain):
+        # adds a carrot(caret) for each word in the chain
+        length = len(chain.chain)
+        starting = chain.chain[0]
+        for word in chain.chain[:-1]:
+            index = self.D.index(word)
+            # print("expanding at " + str(index))
+            self.elem_expansion(index)
+        return (Chain.generate_chain(starting + "0", self, length), Chain.generate_chain(starting + "1", self, length))
+ 
 
 class Chain:
     # Individual chains formally presented as a tuple (iterated augmentation chain, label)
@@ -335,11 +354,8 @@ class Chain:
 
     @classmethod
     def generate_chain(self, starting_point, function, length=None):
-        # This function is the intended way to use Chain class, but pythons lack of private constructors doesn't let me block direct usage. Please don't instantiate Chain directly. Returns a classified Chain type object
+        # This function is the intended way to use Chain class, but pythons lack of private constructors doesn't let me block direct usage. Please don't instantiate Chain directly. This returns a classified Chain type object
 
-        # might be useful error checking, but unnecessary at this point
-        # if starting_point not in Tree.subtract(self.function.D, self.function.R):
-            # raise Exception("Chain must start at leaf of D which is not a leaf of R")
         ch = Chain(starting_point, function)
         neutral_leaves = function.get_neutral_leaves()
         current_length = 0
@@ -355,6 +371,7 @@ class Chain:
                 self.type = "P"
                 break
             if length != None and current_length == length:
+                # if length was given cuts the chain to be the desired length
                 break
             current = function.apply(current)
             ch.chain.append(current)
@@ -386,7 +403,8 @@ class Chains:
         return chains
 
     @classmethod
-    def is_revealing(self, chains):
+    def is_revealing(self, function):
+        chains = self.generate_chains(function)
         if len(chains) == 0:
             raise Exception("Chain must be generated to be revealing")
         
@@ -396,78 +414,32 @@ class Chains:
         return not ("SEF" in types or "SF" in types or "EF" in types)
 
     @classmethod
-    def prefix_metric(self, chains):
-        metric = 0
-        for ch in chains:
-            if ch.type == "SEF":
-                for i in chains:
-                    if V.is_prefix(ch.chain[-1], i.chain[0]):
-                        metric += 1
-                    
-                    if V.is_prefix(ch.chain[0], i.chain[-1]):
-                        metric +=1
-            elif ch.type == "EF":
-                for i in chains:
-                    if V.is_prefix(ch.chain[-1], i.chain[0]):
-                        metric += 1
-            elif ch.type == "SF":
-                for i in chains:
-                    if V.is_prefix(ch.chain[0], i.chain[-1]):
-                        metric +=1
-        return metric
-
-    @classmethod
-    def suffix_metric(self, chains):
-        metric = 0
-        for ch in chains:
-            if ch.type == "SEF":
-                for i in chains:
-                    if V.is_prefix(ch.chain[-1], i.chain[0]):
-                        metric += len(i.chain[0]) - len(ch.chain[-1])
-                    
-                    if V.is_prefix(ch.chain[0], i.chain[-1]):
-                        metric += len(i.chain[-1]) - len(ch.chain[0])
-            elif ch.type == "EF":
-                for i in chains:
-                    if V.is_prefix(ch.chain[-1], i.chain[0]):
-                        metric +=  len(i.chain[0]) - len(ch.chain[-1])
-            elif ch.type == "SF":
-                for i in chains:
-                    if V.is_prefix(ch.chain[0], i.chain[-1]):
-                        metric += len(i.chain[-1]) - len(ch.chain[0])
-        return metric
-
-    @classmethod
     def make_revealing(self, function, g=None, debug=False):
         stack = []
-        chains = Chains.generate_chains(function)
-        if self.is_revealing(chains):
+
+        # checks if its already revealing
+        if self.is_revealing(function):
             print("Already revealing")
             return
-        metrics = []
+
+        # minimises 
         function.minimise()
         # slow rolling algorithm
         chains = Chains.generate_chains(function)
         # print(Chains.is_revealing(chains))
-        while not Chains.is_revealing(chains):
-
-            # chosen_sef = None
-            # chosen_ef = None
-            # chosen_sf = None
-
-            if g == None and debug:
-                # debug 
-                # metric = self.suffix_metric(chains)
-                # metrics.append(metric)
-                # print("metric: " + str(metric))
+        while not Chains.is_revealing(function):
+            if debug:
                 print("chains")
                 for chain in chains:
                     print(chain.chain, chain.type)
             elif g != None:
-                time.sleep(2)
+                # animates the make_revealing process on screen
                 g.clear_entities()
                 g.add_entity(function)
+                time.sleep(1)
                 
+
+            # if the stack is empty (the start of a big step, that concludes when the stack is empty again.)
             if len(stack) == 0:
                 for ch in chains: 
                     if ch.type in ["SEF", "SF", "EF"]:
@@ -475,6 +447,7 @@ class Chains:
                         stack.append(ch)
                         break
 
+            # expand the chosen chain until the fragmentation is entirely mergable.
             while len(stack) != 0:
                 # print([(s.chain, s.type) for s in stack])
                 chosen = stack.pop()
@@ -485,31 +458,5 @@ class Chains:
                 if r_expansion.type in ["SEF", "SF", "EF"]:
                     stack.append(r_expansion)
                 
- 
-
-            # for ch in chains: 
-                # if ch.type in ["SEF", "SF", "EF"]:
-                    # ch.slow_rolling(function)
-                    # break
-            # for ch in chains:
-                # if ch.type == "SEF":
-                    # chosen_sef = ch
-                    # # forces sef to be resolved first at each step
-                    # break
-                # elif ch.type == "SF":
-                    # chosen_sf = ch
-                # elif ch.type == "EF":
-                    # chosen_ef = ch
-
-            # # maintains priority for order of chain resolution
-            # if chosen_sef != None:
-                # chosen_sef.slow_rolling(function)
-            # elif chosen_sf != None:
-                # chosen_sf.slow_rolling(function)
-            # elif chosen_ef != None:
-                # chosen_ef.slow_rolling(function)
-            # print(len(function.D))
+            # regenerating the chains (implicity merges our N chains away)
             chains = Chains.generate_chains(function)
-        if debug: 
-            return metrics
-
