@@ -1,7 +1,6 @@
 import pygame
 import math
 import pygame.locals as pl
-import time
 class Graphics:
     # Define the colors
     BLACK = (0, 0, 0)
@@ -18,6 +17,8 @@ class Graphics:
     HEIGHT = 50
     ANGLE_DEC_FACTOR = 0.75
     INIT_ANGLE = 7/12 * math.pi
+
+    event_queue_mutex = 0
 
 
     def __init__(self, w=1000, h=800):
@@ -57,7 +58,7 @@ class Graphics:
                 self.screen.blit(text, text_rect)
 
             except:
-                print("Exception:")
+                print("Exception: Unexpected error while drawing the tree.")
                 print(string, achains)
                         # if v != None:
                 # print(string, [pair[0] for pair in v.repellers])
@@ -106,11 +107,19 @@ class Graphics:
         self.draw_binary_tree(v.R, pos2, size, v)
     
     def add_entity(self, v):
+        while self.event_queue_mutex == 1:
+            pass
+        self.event_queue_mutex = 1
         self.event_queue.append(("E", v))
-        # self.entities.append(v)
+        self.event_queue_mutex = 0
+
     def clear_entities(self):
-        self.event_queue.append(("C", None))
-        # self.entities = []
+        while self.event_queue_mutex == 1:
+            pass
+        self.event_queue_mutex = 1
+        self.event_queue.append(("C"))
+        self.event_queue_mutex = 0
+
     # use this function
     def run_window(self):
         # Initialize Pygame
@@ -118,7 +127,7 @@ class Graphics:
         FONT = pygame.font.Font(None, 32)
 
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE)
-        pygame.display.set_caption("Tree pair")
+        pygame.display.set_caption("Slowest of rollings")
 
         # Set up the text input box
         color_inactive = pygame.Color('lightskyblue3')
@@ -134,8 +143,10 @@ class Graphics:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+
                 elif event.type == pygame.VIDEORESIZE:
                     self.handle_resize(event)
+
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     # Check if the user clicked on the input box
                     if input_box.collidepoint(event.pos):
@@ -145,6 +156,8 @@ class Graphics:
                         active = False
                     # Change the input box color based on its active state
                     color = color_active if active else color_inactive
+
+                # keyboard input
                 elif event.type == pygame.KEYDOWN:
                     if active:
                         if event.key == pygame.K_RETURN:
@@ -155,26 +168,29 @@ class Graphics:
                         else:
                             text += event.unicode
 
+            current_event = None
+            # thread safe access to the event queue
+            while self.event_queue_mutex == 1:
+                pass
+            self.event_queue_mutex = 1
             if len(self.event_queue) > 0:
-                current_event = self.event_queue[0]
-                self.event_queue.pop(0)
+                current_event = self.event_queue.pop()
+            self.event_queue_mutex = 0
 
+            if current_event != None:
                 if current_event[0] == "E":
                     self.entities.append(current_event[1])
-                elif current_event[1] == "C":
+                elif current_event[0] == "C":
                     self.entities = []
+
 
             # Fill the screen with a background color
             self.screen.fill(self.BACKGROUND_COLOUR)
 
             treesize = (self.screen_width//2,self.screen_height//2)
-            # self.draw_binary_tree(antichain, (SCREEN_WIDTH//2, 50)/t, tree_size)
             for entity in self.entities:
                 # draw tree pair
                 self.draw_tree_pair(entity, (self.screen_width//4,50),(self.screen_width//4*3,50),(treesize[0]/2,treesize[1]))
-
-
-            # pygame.draw.rect(screen, WHITE, pygame.Rect(SCREEN_WIDTH//2 - tree_size[0]//2, 50, tree_size[0], tree_size[1]), width = 1)
 
             # Draw the input box
             pygame.draw.rect(self.screen, color, input_box, 2)

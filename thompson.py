@@ -1,15 +1,49 @@
-# import helper.py
 from copy import deepcopy
-import time
+from time import sleep
 import random as rand
-class V:
-    # identity global
-    iden = th.V(["0", "1"], ["0", "1"])
 
+class V:
     def __init__(self, D=[], R=[]):
         self.D = D
         self.R = R
         self.validate()
+
+    @classmethod 
+    def init_with_DFS(dfsD, dfsR, perm):
+        self.D = self.DFS_to_antichain(dfsD)
+        self.R = []
+
+        zero_indexed = False
+        if 0 in perm:
+            zero_indexed = True
+        unpermuted_R = self.DFS_to_antichain(dfsR)
+        for i in perm:
+            if zero_indexed:
+                self.R.append(unpermuted_R[i])
+            else:
+                self.R.append(unpermuted_R[i - 1])
+        self.validate()
+
+    @classmethod 
+    def init_with_antichains(achain_D, achain_R, perm):
+        achain_D.sort()
+        achain_R.sort()
+        self.D = self.achain_D
+        self.R = []
+
+        zero_indexed = False
+        if 0 in perm:
+            zero_indexed = True
+        for i in perm:
+            if zero_indexed:
+                self.R.append(achain_R[i])
+            else:
+                self.R.append(achain_R[i - 1])
+        self.validate()
+
+    # identity global
+    def get_identity(self):
+        return self.__init__(["0", "1"], ["0", "1"])
 
     def validate(self):
         if len(self.D) != len(self.R):
@@ -65,7 +99,7 @@ class V:
         self.R.insert(index, elem + "0")
         self.R.insert(index + 1, elem + "1")
 
-    def elem_minimise(self, tuple0, tuple1):
+    def _elem_minimise(self, tuple0, tuple1):
         # reverses an elementary expansion
         # input is tuples of words of r and image
         word_in_D = tuple0[0][:-1]
@@ -101,10 +135,9 @@ class V:
     def minimise(self, g=None):
         while self._rec_minimise():
             if g != None:
-                time.sleep(2)
                 g.clear_entities()
                 g.add_entity(self)
-                print(self.is_antichain(self.D), self.is_antichain(self.R))
+                sleep(1)
             self._rec_minimise()
 
     @classmethod
@@ -206,43 +239,7 @@ class V:
 
     def get_neutral_leaves(self):
         return [leaf for leaf in self.D if leaf in self.R]
-    
-    # def get_connected_components(self):
-        # # I worked really hard on this and thought it was very clever but it was very unnecessary.
-        # # returns tuple of lists of leaves that are in the same connected component.
-        # # first index for D and second index for R
-        # connected_components = ([],[])
-        # common_tree = Trees.intersect(Trees.build_tree(self.D), Trees.build_tree(self.R))
-        # d_not_r = self.get_d_not_r()
-        # r_not_d = self.get_r_not_d()
-        
-        # while len(d_not_r) > 0:
-            # d = d_not_r[0]
-            # con_comp = []
-
-            # i = 1
-            # while (d[:-i] not in common_tree):
-                # i = i + 1
-            
-            # con_comp = [v for v in d_not_r if V.is_prefix(d[:-i], v)]
-            
-            # d_not_r = [d for d in d_not_r if d not in con_comp]
-            # connected_components[0].append(con_comp)
-    
-        # while len(r_not_d) > 0:
-            # r = r_not_d[0]
-            # con_comp = []
-
-            # i = 1
-            # while (r[:-i] not in common_tree):
-                # i = i + 1
-            
-            # con_comp = [v for v in r_not_d if V.is_prefix(r[:-i], v)]
-            
-            # r_not_d = [r for r in r_not_d if r not in con_comp]
-            # connected_components[1].append(con_comp)
-        # return connected_components
-
+   
     @classmethod
     def DFS_to_antichain(self, dfs):
         achain = [""]
@@ -294,6 +291,7 @@ class V:
             self.elem_expansion(index)
         return (Chain.generate_chain(starting + "0", self, length), Chain.generate_chain(starting + "1", self, length))
  
+
 
 class Chain:
     # Individual chains formally presented as a tuple (iterated augmentation chain, label)
@@ -435,8 +433,8 @@ class Chains:
             elif g != None:
                 # animates the make_revealing process on screen
                 g.clear_entities()
+                sleep(1)
                 g.add_entity(function)
-                time.sleep(1)
                 
 
             # if the stack is empty (the start of a big step, that concludes when the stack is empty again.)

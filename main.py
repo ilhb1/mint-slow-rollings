@@ -17,8 +17,6 @@ x.start()
 
 # list of prebuilt examples
 examples = {
-            "identity" : th.V(["0", "1"], ["0", "1"]),
-
             "Homer" : th.V(["000", "0010", "0011", "01", "1000", "1001", "101", "11"],["01", "1100", "1110", "10", "1111", "11011", "00", "11010"]),
             "Monk" : th.V(["000", "0010", "0011","010", "011", "100", "101", "110","111"], ["100", "1010", "110", "1110", "11110", "01", "00", "11111", "1011"]),
             "Kermit" : th.V(["000", "0010", "0011", "01", "1000", "1001", "101", "11"], ["01", "1100", "1110", "10", "1111", "11011", "00", "11010"]),
@@ -40,13 +38,15 @@ a = examples["Monk"]
 # for p in prod_chains:
     # print(p.chain, p.type)
 
-current = examples["identity"]
-for i in range(3):
-    print("product a^" + str(i + 1))
-    current = th.V.rev_product(current,a)
-    prod_chains = th.Chains.generate_chains(current)
-    for p in prod_chains:
-        print(p.chain, p.type)
+th.Chains.make_revealing(a, g)
+
+# current = examples["identity"]
+# for i in range(3):
+    # print("product a^" + str(i + 1))
+    # current = th.V.rev_product(current,a)
+    # prod_chains = th.Chains.generate_chains(current)
+    # for p in prod_chains:
+        # print(p.chain, p.type)
 
 
 # Random element experiment
@@ -91,7 +91,6 @@ for i in range(3):
 #     # print(Monk.apply(Homer.apply(string)) == result.apply(string))
 #     # print(Homer.apply(string),Monk.apply(Homer.apply(string)), result.apply(string))
 
-# Doof = t.V(t.V.DFS_to_antichain("110111000011000"),t.V.DFS_to_antichain("110111000011000"))
 # g.add_entity(Doof)
 
 # required for joining the graphics thread
