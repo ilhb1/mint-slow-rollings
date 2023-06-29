@@ -10,6 +10,8 @@ class V:
 
     @classmethod 
     def init_with_DFS(dfsD, dfsR, perm):
+        if sorted(perm) != range(0,len(perm)) or sorted(perm) != range(1, len(perm) + 1):
+            raise Exception("Invalid permutation for initialisation of V")
         self.D = self.DFS_to_antichain(dfsD)
         self.R = []
 
@@ -26,6 +28,9 @@ class V:
 
     @classmethod 
     def init_with_antichains(achain_D, achain_R, perm):
+        if sorted(perm) != range(0,len(perm)) or sorted(perm) != range(1, len(perm) + 1):
+            raise Exception("Invalid permutation for initialisation of V")
+
         achain_D.sort()
         achain_R.sort()
         self.D = self.achain_D
