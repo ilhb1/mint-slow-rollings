@@ -7,13 +7,19 @@ class V:
         self.D = D
         self.R = R
         self.validate()
+    def __repr__(self):  
+        return "Group element: D:%s R:%s" % (self.D, self.R)  
+    
+    def __str__(self):  
+        return "Group element: D:%s R:%s" % (self.D, self.R)  
 
     @classmethod 
-    def init_with_DFS(dfsD, dfsR, perm):
-        if sorted(perm) != range(0,len(perm)) or sorted(perm) != range(1, len(perm) + 1):
+    def init_with_DFS(self,dfsD, dfsR, perm):
+        if sorted(perm) != list(range(0,len(perm))) and sorted(perm) != list(range(1, len(perm) + 1)):
             raise Exception("Invalid permutation for initialisation of V")
-        self.D = self.DFS_to_antichain(dfsD)
-        self.R = []
+        res = V()
+        res.D = self.DFS_to_antichain(dfsD)
+        res.R = []
 
         zero_indexed = False
         if 0 in perm:
@@ -21,30 +27,33 @@ class V:
         unpermuted_R = self.DFS_to_antichain(dfsR)
         for i in perm:
             if zero_indexed:
-                self.R.append(unpermuted_R[i])
+                res.R.append(unpermuted_R[i])
             else:
-                self.R.append(unpermuted_R[i - 1])
-        self.validate()
+                res.R.append(unpermuted_R[i - 1])
+        res.validate()
+        return res
 
     @classmethod 
-    def init_with_antichains(achain_D, achain_R, perm):
-        if sorted(perm) != range(0,len(perm)) or sorted(perm) != range(1, len(perm) + 1):
+    def init_with_antichains(self, achain_D, achain_R, perm):
+        if sorted(perm) != list(range(0,len(perm))) and sorted(perm) != list(range(1, len(perm) + 1)):
             raise Exception("Invalid permutation for initialisation of V")
 
         achain_D.sort()
         achain_R.sort()
-        self.D = self.achain_D
-        self.R = []
+        res = V()
+        res.D = achain_D
+        res.R = []
 
         zero_indexed = False
         if 0 in perm:
             zero_indexed = True
         for i in perm:
             if zero_indexed:
-                self.R.append(achain_R[i])
+                res.R.append(achain_R[i])
             else:
-                self.R.append(achain_R[i - 1])
-        self.validate()
+                res.R.append(achain_R[i - 1])
+        res.validate()
+        return res
 
     # identity global
     def get_identity(self):
@@ -133,7 +142,7 @@ class V:
                 img_r1 = self.apply(r1)
 
                 if img_r0 == img_r1[:-1] + "0" and img_r1[-1] == "1":
-                    self.elem_minimise((r0, img_r0), (r1, img_r1))   
+                    self._elem_minimise((r0, img_r0), (r1, img_r1))   
                     return True
         return False
 

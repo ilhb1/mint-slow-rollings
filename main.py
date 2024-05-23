@@ -3,6 +3,7 @@ import thompson as th
 import logging
 import threading
 import time
+import engine as eng
 
 # required for starting the graphics thread
 g = None
