@@ -3,18 +3,42 @@ from time import sleep
 import random as rand
 
 class V:
+    """The main class instantiating elements of Thompson's group V.
+    """    
     def __init__(self, D=[], R=[]):
+        """Instantiates a new element using two ordered antichains where the order represents the bijection, based on index.
+        The word in the ith index of D is mapped to the ith index of R.
+
+        Args:
+            D (list, optional): Domain antichain of binary words. Defaults to [].
+            R (list, optional): Range antichain of binary words. Defaults to [].
+        """
         self.D = D
         self.R = R
         self.validate()
     def __repr__(self):  
+        """Used for printing the group element's data"""
         return "Group element: D:%s R:%s" % (self.D, self.R)  
     
     def __str__(self):  
+        """Used for printing the group element's data"""
         return "Group element: D:%s R:%s" % (self.D, self.R)  
 
     @classmethod 
     def init_with_DFS(self,dfsD, dfsR, perm):
+        """Alternate method to instantiate group elements using a DFS approach (TODO)
+
+        Args:
+            dfsD (str): A string of 0s and 1s that gives the shape of the domain tree.
+            dfsR (str): A string of 0s and 1s that gives the shape of the range tree.
+            perm (str): A permutation of [0,1,2, ... , len(D)-1] or [1,2, ... , len(D)] that gives the bijection between the leaves of the two trees. Note that this method works for the permutation being 1-indexed or 0-indexed.
+
+        Raises:
+            Exception: Exception is raised when the permutation is invalid.
+
+        Returns:
+            V: Returns the generate element.
+        """        
         if sorted(perm) != list(range(0,len(perm))) and sorted(perm) != list(range(1, len(perm) + 1)):
             raise Exception("Invalid permutation for initialisation of V")
         res = V()
@@ -35,6 +59,19 @@ class V:
 
     @classmethod 
     def init_with_antichains(self, achain_D, achain_R, perm):
+        """Alternate method to instantiate an element using two unordered antichains and a permutation.
+
+        Args:
+            achain_D (list): A list of strings of 0s and 1s that forms a complete antichain that forms the domain tree.
+            achain_R (list): A list of strings of 0s and 1s that forms a complete antichain that forms the range tree.
+            perm (str): A permutation of [0,1,2, ... , len(D)-1] or [1,2, ... , len(D)] that gives the bijection between the leaves of the two trees. Note that this method works for the permutation being 1-indexed or 0-indexed.
+
+        Raises:
+            Exception: Exception is raised when the permutation is invalid.
+
+        Returns:
+            V: Returns the generated element.
+        """
         if sorted(perm) != list(range(0,len(perm))) and sorted(perm) != list(range(1, len(perm) + 1)):
             raise Exception("Invalid permutation for initialisation of V")
 
@@ -57,9 +94,20 @@ class V:
 
     # identity global
     def get_identity(self):
+        """Generates an element representing the identity. (TODO) what does minimising this do?
+
+        Returns:
+            V: A tree pair representing the identity element of V.
+        """
         return self.__init__(["0", "1"], ["0", "1"])
 
     def validate(self):
+        """Validates if the element that was generated is a valid element of V
+
+        Raises:
+            Exception: If the bijection given in the element is invalid.
+            Exception: If either domain or range is not an antichain.
+        """       
         if len(self.D) != len(self.R):
             raise Exception("element must be a bijection")
         if not self.is_antichain(self.D) or not self.is_antichain(self.R):
@@ -304,7 +352,16 @@ class V:
             # print("expanding at " + str(index))
             self.elem_expansion(index)
         return (Chain.generate_chain(starting + "0", self, length), Chain.generate_chain(starting + "1", self, length))
- 
+    # wrappers around Chains
+    def generate_chains(self):
+        return Chains.generate_chains(self)
+
+    def is_revealing(self):
+        return Chains.is_revealing(self)
+
+    def make_revealing(self, g, debug):
+        return Chains.make_revealing(self, g, debug)
+     
 
 
 class Chain:
@@ -401,7 +458,8 @@ class Chain:
             # print("expanding at " + str(index))
             function.elem_expansion(index)
         return (self.generate_chain(starting + "0", function, length), self.generate_chain(starting + "1", function, length))
-        
+
+       
 class Chains:
     @classmethod
     def generate_chains(self, function):
