@@ -33,13 +33,25 @@ examples = {
 
 ###################### Write code here #########################
 #to engage graphics, use g.clear_entities() then g.add_entity({element of V})
-a = examples["Monk"]
+# a = examples["Monk"]
+a = th.V(["0","10","1100","1101","111"],["0","11","1011","1010","100"])
+ch = th.Chains.generate_chains(a)
+for c in ch:
+    print(c.chain, c.type)
+# th.Chains.make_revealing(a, g=g, debug=True)
+g.add_entity(a)
+
+
+
+
+
 # b = examples["Kermit"]
 # prod_chains = th.Chains.generate_chains(th.V.rev_product(a,b))
 # for p in prod_chains:
     # print(p.chain, p.type)
 
-th.Chains.make_revealing(a, g)
+# g.add_entity(a)
+# th.Chains.make_revealing(a, g)
 
 # current = examples["identity"]
 # for i in range(3):
@@ -93,6 +105,14 @@ th.Chains.make_revealing(a, g)
 #     # print(Homer.apply(string),Monk.apply(Homer.apply(string)), result.apply(string))
 
 # g.add_entity(Doof)
+
+# try
+# small = th.V(["000","001","010","011","10","11"],["010","111","00","10","011","110"])
+# ch = th.Chains.generate_chains(small)
+# for c in ch:
+    # print(c.chain, c.type)
+# th.Chains.make_revealing(small, g=g, debug=True)
+# g.add_entity(small)
 
 # required for joining the graphics thread
 x.join()

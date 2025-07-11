@@ -25,4 +25,3 @@ while running:
     string = input()
     res = engine.parse_string(string, debug=False)
     print(res)
-# print(engine.parse_string("(Homer * Mullet)", debug=True))

@@ -5,6 +5,7 @@ import re
 from thompson import V
 
 # TODO CONSIDER TWO PARSERS
+# TODO IMPLEMENT == 
 
 # COMMANDS TO IMPLEMENT:
 # - make revealing
