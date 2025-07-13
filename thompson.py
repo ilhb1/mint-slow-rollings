@@ -115,6 +115,17 @@ class V:
 
 
     def apply(self, string):
+        """Applies the element as a prefix exchange map to a string of 0s and 1s. The group element acts on this string.
+
+        Args:
+            string (str): String of 0s and 1s
+
+        Raises:
+            Exception: Raises an Exception if the input string is a prefix of a leaf in the domain antichain.
+
+        Returns:
+            str: Returns the output of the prefix exchange map.
+        """
         self.validate()
         # identifying prefix
         for i in range(len(self.D)):
@@ -130,6 +141,15 @@ class V:
 
     @classmethod
     def is_prefix(self, string1, string2):
+        """Implements the prefix relation.
+
+        Args:
+            string1 (str): First string.
+            string2 (str): Second string.
+
+        Returns:
+            bool: returns True if and only if first string is a prefix of the second string.
+        """
         # returns true iff string1 is a prefix of string2
         if len(string1) >= len(string2): return False
         if string2[0:len(string1)] == string1:
@@ -138,6 +158,14 @@ class V:
 
     @classmethod
     def is_antichain(self, words):
+        """Checks if a list of words is an antichain.
+
+        Args:
+            words (list): List of strings of 0s and 1s.
+
+        Returns:
+            bool: Returns True iff. words is an antichain
+        """
         # checks if the given iterable of words is an antichain
         for i in words:
             for j in words:
@@ -146,8 +174,16 @@ class V:
         return True
        
     def elem_expansion(self, index):
+        """Performs an elementary expansion, adding a caret to two leaves with the same label to the tree pair. 
+
+        Args:
+            index (int): The zero-indexed integer label of the leaves where the carets are added.
+
+        Raises:
+            IndexError: Raises this Exception if the given index is out of range for the tree.
+        """
         if index >= len(self.D):
-            raise Exception("Cannot expand at index out of range.")
+            raise IndexError("Cannot expand at index out of range.")
 
         #expanding in D
         elem = self.D[index]
@@ -161,9 +197,23 @@ class V:
         self.R.insert(index, elem + "0")
         self.R.insert(index + 1, elem + "1")
 
+
+    # UNTESTED METHOD
+    def elem_reduction(self, left_index, right_index):
+        # check if the indices form a dangling pair.
+        left_leaf = self.D[left_index]
+        right_leaf = self.D[right_index]
+        left_leaf_img = self.apply(left_leaf)
+        right_leaf_img = self.apply(right_leaf)
+        if left_leaf == right_leaf[:-1] + 0:
+            if left_leaf_img == right_leaf_img[:-1] + 0:
+                self._elem_minimise((left_leaf, left_leaf_img), (right_leaf, right_leaf_img))
+
     def _elem_minimise(self, tuple0, tuple1):
+        """Reverses an elementary expansion. Private method used in minimise."""
+        
         # reverses an elementary expansion
-        # input is tuples of words of r and image
+        # input is tuples of words of  and image
         word_in_D = tuple0[0][:-1]
         word_in_R = tuple0[1][:-1]
 
@@ -179,35 +229,57 @@ class V:
         self.R.insert(index, word_in_R)
 
     def _rec_minimise(self):
+        """Recursive helper function used in minimisation."""
         for d in self.D:
             # print(d)
             # print(self.D)
+            
+            # for each leaf in D check if the parent is the parent of a dangling caret. (this can me made more efficient as we check each parent twice.)
             root = d[:-1]
+            # r0 and r1 are the two children of the root.
             r0 = root + "0"
             r1 = root + "1"
+
+            #sanity check
             if r1 in self.D and r0 in self.D:
                 img_r0 = self.apply(r0)
                 img_r1 = self.apply(r1)
 
+                # checks if r0 and r1 map to a dangling caret
                 if img_r0 == img_r1[:-1] + "0" and img_r1[-1] == "1":
                     self._elem_minimise((r0, img_r0), (r1, img_r1))   
                     return True
         return False
 
-    def minimise(self, g=None):
+    def minimise(self):
+        """Gives the minimal tree pair for this element. Can be shown to be unique.
+        """        
         while self._rec_minimise():
-            if g != None:
-                g.clear_entities()
-                g.add_entity(self)
-                sleep(1)
             self._rec_minimise()
 
     @classmethod
     def invert(self, a):
+        """Generates a tree pair that is the inverse of a.
+
+        Args:
+            a (V): Tree pair input that whose inverse is calculated.
+
+        Returns:
+            V: Returns a^-1
+        """        
         return V(a.R, a.D)
 
     @classmethod
     def product(self, a, b):
+        """Returns the minimal product of a and b. (a * b) Note that this copies the inputs first and the original inputs are not affected and the original inputs are not affected.
+
+        Args:
+            a (V): First tree pair.
+            b (V): Second tree pair
+
+        Returns:
+            V: Returns a*b
+        """        
         # returns minimal product
         # making copies to not change state of a,b
         # minimising first
@@ -244,6 +316,15 @@ class V:
     
     @classmethod
     def rev_product(self, a, b):
+        """Returns the product of a and b in revealing tree pair form. (a * b) Note that this copies the inputs first and the original inputs are not affected and the original inputs are not affected.
+
+        Args:
+            a (V): First tree pair.
+            b (V): Second tree pair
+
+        Returns:
+            V: Returns a*b in revealing tree form.
+        """  
         # returns revealing product
         # making copies to not change state of a,b
         # minimising first
@@ -279,13 +360,32 @@ class V:
         Chains.make_revealing(res)
         return res
 
+    # TODO add a flag for right vs left actions. 
     @classmethod
     def conjugate(self, g, c):
+        """Conjugates g with c.
+
+        Args:
+            g (_type_): _description_
+            c (_type_): _description_
+
+        Returns:
+            V: returns g^c
+        """
         # returns c^-1 g c (right actions for now)
         return self.product(self.product(self.invert(c), g), c)
     
     @classmethod 
     def is_equal(self, a, b):
+        """Checks if two tree pairs represent the same element of V.
+
+        Args:
+            a (V): First tree pair
+            b (V): Second tree pair
+
+        Returns:
+            bool: True iff a and b represent the same element.
+        """
         a_copy = deepcopy(a)
         a_copy.minimise()
         b_copy = deepcopy(b)
@@ -294,16 +394,27 @@ class V:
         return (a_copy.D == b_copy.D and a_copy.R == b_copy.R)
 
     def get_d_not_r(self):
+        """Get the set difference, D - R"""
         return [d for d in self.D if d not in self.R]
 
     def get_r_not_d(self):
+        """Get the set difference, R - D"""
         return [r for r in self.R if r not in self.D]
 
     def get_neutral_leaves(self):
+        """Get the set intersection of R and D"""
         return [leaf for leaf in self.D if leaf in self.R]
    
     @classmethod
     def DFS_to_antichain(self, dfs):
+        """TODO Explain how this works
+
+        Args:
+            dfs (str): Bitstring representing tree shape.
+
+        Returns:
+            list: Antichain generated from the bitstring.
+        """
         achain = [""]
         current_word = ""
         stack = []
@@ -324,6 +435,7 @@ class V:
     # methods for testing on random antichains
     @classmethod
     def generate_random_antichain(self, length):
+        """Generates a random antichain of given length"""
         achain = [""]
         while(len(achain) < length):
             chosen = rand.choice(achain)
@@ -334,6 +446,7 @@ class V:
 
     @classmethod
     def generate_random_elements(self, size=10, n=1):
+        """Generates random elements of given size and quantity n."""
         elements = []
         for i in range(n):
             achain_D = self.generate_random_antichain(size)
@@ -344,6 +457,14 @@ class V:
         return elements
 
     def slow_rolling(self, chain):
+        """Performs a slow roll along the chain, elementarily expanding along the chain adding a caret to every leaf.
+
+        Args:
+            chain (Chain): Chain object along which we slow roll.
+
+        Returns:
+            Chain: returns the new chain object.
+        """
         # adds a carrot(caret) for each word in the chain
         length = len(chain.chain)
         starting = chain.chain[0]
