@@ -2,7 +2,7 @@ Created by PLY version 3.11 (http://www.dabeaz.com/ply)
 
 Unused terminals:
 
-    EQUALEQUALS
+    CHECKEQUALS
 
 Grammar
 
@@ -33,12 +33,12 @@ Terminals, with rules where they appear
 
 APPLY                : 12
 BSTRING              : 13 21
+CHECKEQUALS          : 
 COMMA                : 16
 COMPOSE              : 6
 CONJ                 : 9
 DEFCOMMAND           : 11
 DEFINEEQUALS         : 5
-EQUALEQUALS          : 
 GENCOMMAND           : 4
 LPAREN               : 7 14
 LSQBRACKET           : 15

@@ -1,6 +1,8 @@
 import ply.lex as lex
 import ply.yacc as yacc
 import re
+import networkx as nx
+import matplotlib.pyplot as plt
 
 from thompson import V
 
@@ -46,7 +48,7 @@ class M_Lexer:
     t_LSQBRACKET  = r'\['
     t_RSQBRACKET  = r'\]'
     t_COMMA = r','
-    t_VAR = r'[a-zA-Z][a-zA-Z0-9]+'
+    t_VAR = r'[a-zA-Z][a-zA-Z0-9]*'
     t_BSTRING = r"""('[01]+')|("[01]+")"""
     t_APPLY = r'\|'
     t_DEFCOMMAND = r'(def_from_dfs)|(def_from_achains)'
@@ -264,6 +266,7 @@ class Engine:
         self.lexer = M_Lexer()
         self.lexer.build()
         self.parser = M_Parser(self.lexer, startup_var)
+        self.visualiser = Visualiser()
 
     def parse_string(self, string, debug=False):
         return self.parser.parser.parse(string, debug=debug)
@@ -282,8 +285,91 @@ class Engine:
 
             variables = self.get_variables()
             if command[0] == "/show":
+                print("executing command", command)
                 for i in command[1]:
                     print(variables[i])
+                    self.visualiser.show_element(variables[i]) 
+                    # print(variables[i])
                     
+
+
+class Visualiser:
+    def __init__(self):
+        pass 
+    def _rec_digraph_from_antichain(self, antichain, root, G):
+
+        # checking if our tree passes the antichain boundary
+        if root != "empty" and len(root) > len(max(antichain, key=len)):
+            # print(root, antichain, max(antichain))
+            raise Exception("Antichain is incomplete.")
+        if root not in antichain:
+            if root != "empty":
+                left = root + '0'
+                right = root + '1'
+            else:
+                left = '0'
+                right = '1'
+
+            G.add_node(left)
+            G.add_node(right)
+            
+            G.add_edge(root, left)
+            G.add_edge(root, right)
+
+
+            self._rec_digraph_from_antichain(antichain, left, G)
+
+            self._rec_digraph_from_antichain(antichain, right, G)
+        return G
+
+    def digraph_from_antichain(self, antichain):
+        # this 'empty' trick is necessary as NoneTypes cant be nodes in networkx so "" does not suffice.
+        G = nx.DiGraph()
+        root = "empty"
+        G.add_node(root)
+        self._rec_digraph_from_antichain(antichain, root, G)
+        return G
+
+    def digraph_pair_from_element(self,v):
+        L = self.digraph_from_antichain(v.D)
+        R = self.digraph_from_antichain(v.R)
+
+        perm = v.permutation
+
+        leaves_of_L = sorted([v for v, d in L.out_degree() if d == 0])
+        L_labels = {}
+        for i in range(len(leaves_of_L)):
+            L_labels[leaves_of_L[i]] = i
+
+        leaves_of_R = sorted([v for v, d in R.out_degree() if d == 0])
+        R_labels = {}
+        for i in range(len(leaves_of_R)):
+            R_labels[leaves_of_R[i]] = perm[i]
+
+        return (L,R,(L_labels,R_labels))
+
+    def show_element(self,v):
+        fig, ax = plt.subplots(1,2)
+        (L,R,(a,b)) = self.digraph_pair_from_element(v)
+
+        # tree pair visualisation code
+        posL = nx.drawing.nx_agraph.graphviz_layout(L, prog="dot")
+
+        posR = nx.drawing.nx_agraph.graphviz_layout(R, prog="dot")
+
+        nx.draw(L,posL,ax[0],labels = a, with_labels=True)
+        nx.draw(R,posR,ax[1],labels = b, with_labels=True)
+        plt.show()
+
+
+
+    
+
+   
+
+
+
+
+        
 
 

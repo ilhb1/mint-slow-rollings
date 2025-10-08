@@ -1,20 +1,23 @@
 import graphics as graphics
+import matplotlib.pyplot as plt
 import thompson as th
 import logging
 import threading
 import time
 import engine as eng
-
+import networkx as nx
+# from networkx.drawing.nx_agraph import graphviz_layout
+import pydot
 # required for starting the graphics thread
-g = None
-def thread_function(name):
-    logging.info("Thread %s: starting", name)
-    logging.info("Thread %s: finishing", name)
-    global g 
-    g = graphics.Graphics()
-    g.run_window()
-x = threading.Thread(target=thread_function, args=(1,))
-x.start()
+# g = None
+# def thread_function(name):
+    # logging.info("Thread %s: starting", name)
+    # logging.info("Thread %s: finishing", name)
+    # global g 
+    # g = graphics.Graphics()
+    # g.run_window()
+# x = threading.Thread(target=thread_function, args=(1,))
+# x.start()
 
 # list of prebuilt examples
 examples = {
@@ -34,16 +37,61 @@ examples = {
 ###################### Write code here #########################
 #to engage graphics, use g.clear_entities() then g.add_entity({element of V})
 # a = examples["Monk"]
-a = th.V(["0","10","1100","1101","111"],["0","11","1011","1010","100"])
-ch = th.Chains.generate_chains(a)
-for c in ch:
-    print(c.chain, c.type)
-# th.Chains.make_revealing(a, g=g, debug=True)
-g.add_entity(a)
+# a = th.V(["0","10","1100","1101","111"],["0","11","1011","1010","100"])
+# ch = th.Chains.generate_chains(a)
+# for c in ch:
+    # print(c.chain, c.type)
+# # th.Chains.make_revealing(a, g=g, debug=True)
+# g.add_entity(a)
+
+# a = th.V(["0","100","101","11"],["1","010","00","011"])
+# ch = th.Chains.generate_chains(a)
+# for c in ch:
+    # print(c.chain, c.type)
+# print("number of expansions", th.Chains.make_revealing(a, g=g, debug=True))
+# print("revealing")
+# ch = th.Chains.generate_chains(a)
+# for c in ch:
+    # print(c.chain, c.type)
+# g.add_entity(a)
+
+## testing getting the permutation
+# P = examples['Homer'].R
+# print(P, sorted(P), examples['Homer'].permutation)
+
+# tree pair visualisation code
+# vis = eng.Visualiser()
+# vis.show_element(examples['Homer'])
+# (L,R,(a,b))= vis.digraph_pair_from_element(examples['Homer'])
 
 
+# K=nx.disjoint_union(L,R)
+# nx.draw_networkx(K)
+# same layout using matplotlib with no labels
+# pos = nx.drawing.nx_agraph.graphviz_layout(L, prog="dot")
+# nx.draw(L, pos,labels = a, with_labels=True)
+# plt.show()
 
-
+# Random element experiment
+# m = 100
+# data_n = []
+# data_exp_0 = []
+# data_exp_1 = []
+# for n in range(6,17):
+    # elements = th.V.generate_random_elements(n, m)
+    # print(n)
+    # # print(elements)
+    # for e in elements:    
+        # e.generate_chains()
+        # metrics = th.Chains.make_revealing(e)
+        # data_exp_0.append(metrics[0])
+        # data_exp_1.append(metrics[1])
+        # data_n.append(n)
+        # # print(metrics,n)
+# # print(data_n, data_exp)
+# plt.scatter(data_n, data_exp_0)
+# plt.scatter(data_n, data_exp_1)
+# plt.show()
 
 # b = examples["Kermit"]
 # prod_chains = th.Chains.generate_chains(th.V.rev_product(a,b))
@@ -55,11 +103,11 @@ g.add_entity(a)
 
 # current = examples["identity"]
 # for i in range(3):
-    # print("product a^" + str(i + 1))
-    # current = th.V.rev_product(current,a)
-    # prod_chains = th.Chains.generate_chains(current)
-    # for p in prod_chains:
-        # print(p.chain, p.type)
+#     print("product a^" + str(i + 1))
+#     current = th.V.rev_product(current,a)
+#     prod_chains = th.Chains.generate_chains(current)
+#     for p in prod_chains:
+#         print(p.chain, p.type)
 
 
 # Random element experiment
@@ -115,4 +163,4 @@ g.add_entity(a)
 # g.add_entity(small)
 
 # required for joining the graphics thread
-x.join()
+# x.join()

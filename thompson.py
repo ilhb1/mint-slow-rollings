@@ -16,6 +16,10 @@ class V:
         self.D = D
         self.R = R
         self.validate()
+        self.permutation = self._get_perm(R)
+
+
+    
     def __repr__(self):  
         """Used for printing the group element's data"""
         return "Group element: D:%s R:%s" % (self.D, self.R)  
@@ -23,6 +27,12 @@ class V:
     def __str__(self):  
         """Used for printing the group element's data"""
         return "Group element: D:%s R:%s" % (self.D, self.R)  
+
+    def _get_perm(self, P):
+        """Gets the permutation that gets P from the sorted version of P"""
+        S = sorted(P)
+        perm = [S.index(p) for p in P]
+        return perm
 
     @classmethod 
     def init_with_DFS(self,dfsD, dfsR, perm):
@@ -488,6 +498,12 @@ class V:
 class Chain:
     # Individual chains formally presented as a tuple (iterated augmentation chain, label)
     def __init__(self, starting_point, function):
+        """Creates the chain with a starting point, repeatedly applying the function till chain reaches a non-neutral leave. Do not use this method as the primary way to instantiate a chain. Use the Chains.generate_chains method.
+
+        Args:
+            starting_point (str): String of 0s and 1s.
+            function (V): The tree pair that is repeatedly applied to the starting_point.
+        """        
         self.chain = [] 
         self.type = ""
 
@@ -544,6 +560,16 @@ class Chain:
 
     @classmethod
     def generate_chain(self, starting_point, function, length=None):
+        """Use this to generate the Chain object. Generates a chain from the starting point by repeatedly applying the function.
+
+        Args:
+            starting_point (str): String of 0s and 1s to which the function is applied.
+            function (V): Tree pair that is applied to the starting_point.
+            length (int, optional): Maximum length of the chain. Defaults to None.
+
+        Returns:
+            Chain: Returns a chain object generated from this function and starting point.
+        """
         # This function is the intended way to use Chain class, but pythons lack of private constructors doesn't let me block direct usage. Please don't instantiate Chain directly. This returns a classified Chain type object
 
         ch = Chain(starting_point, function)
@@ -571,6 +597,9 @@ class Chain:
         return ch
 
     def slow_rolling(self, function):
+        """Alternate use of slow_rolling function, do not use."""
+
+
         # adds a carrot(caret) for each word in the chain
         length = len(self.chain)
         starting = self.chain[0]
@@ -584,6 +613,14 @@ class Chain:
 class Chains:
     @classmethod
     def generate_chains(self, function):
+        """Generates all the classified chains for the given tree pair.
+
+        Args:
+            function (V): The tree pair for which the chains are generated.
+
+        Returns:
+            Chains: Returns a Chains type object.
+        """
         # generates the chains for a given element of V
         starting_points = function.get_d_not_r()
         chains = []
@@ -595,26 +632,52 @@ class Chains:
 
     @classmethod
     def is_revealing(self, function):
+        """Checks if the given tree pair is in revealing tree pair."""
         chains = self.generate_chains(function)
+        # print(function, chains)
         if len(chains) == 0:
-            raise Exception("Chain must be generated to be revealing")
+            # if there are no chains there are no F-chains, 
+            return True
+            # raise Exception("Chain must be generated to be revealing")
         
         types = [chain.type for chain in chains]
        
         # returns false if types contain any fragmentation labels
         return not ("SEF" in types or "SF" in types or "EF" in types)
 
+    #TODO
     @classmethod
     def make_revealing(self, function, g=None, debug=False):
+        """The main algorithm that makes the given tree pair revealing.
+
+        Args:
+            function (V): The tree pair that needs to be made revealing.
+            g (Graphics, optional): _description_. Defaults to None.
+            debug (bool, optional): _description_. Defaults to False.
+        """
         stack = []
+        num_of_expansions = 0
+        s3_iterations = 0
+        # s4_iterations = 0 this is equal to num_of_expansions
 
         # checks if its already revealing
         if self.is_revealing(function):
-            print("Already revealing")
-            return
-
+            # print("Already revealing")
+            return (0,0)
+        if g != None:
+            # animates the make_revealing process on screen
+            g.clear_entities()
+            sleep(1)
+            g.add_entity(function)
+                
         # minimises 
         function.minimise()
+        if g != None:
+            # animates the make_revealing process on screen
+            g.clear_entities()
+            sleep(1)
+            g.add_entity(function)
+         
         # slow rolling algorithm
         chains = Chains.generate_chains(function)
         # print(Chains.is_revealing(chains))
@@ -623,7 +686,7 @@ class Chains:
                 print("chains")
                 for chain in chains:
                     print(chain.chain, chain.type)
-            elif g != None:
+            if g != None:
                 # animates the make_revealing process on screen
                 g.clear_entities()
                 sleep(1)
@@ -637,6 +700,7 @@ class Chains:
                         # print(ch.chain, ch.type)
                         stack.append(ch)
                         break
+                s3_iterations += 1
 
             # expand the chosen chain until the fragmentation is entirely mergable.
             while len(stack) != 0:
@@ -648,6 +712,13 @@ class Chains:
                     stack.append(l_expansion)
                 if r_expansion.type in ["SEF", "SF", "EF"]:
                     stack.append(r_expansion)
+                num_of_expansions += 1
                 
             # regenerating the chains (implicity merges our N chains away)
             chains = Chains.generate_chains(function)
+        if debug:
+            print("chains")
+            for chain in chains:
+                print(chain.chain, chain.type)
+            print("number of expansions", num_of_expansions)
+        return (num_of_expansions, s3_iterations)

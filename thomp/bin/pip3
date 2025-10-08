@@ -1,4 +1,4 @@
-#!/home/mad/prog_proj/code/thompson/thomp/bin/python3
+#!/home/mad/prog_proj/code/thompson/thomp/bin/python3.13
 # -*- coding: utf-8 -*-
 import re
 import sys
